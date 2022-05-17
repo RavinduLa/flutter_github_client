@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'github_oauth_credentials.dart';
-import 'src/github_login.dart';
 import 'package:github/github.dart';
 import 'package:window_to_front/window_to_front.dart';
+
+import 'github_oauth_credentials.dart';
+import 'src/github_login.dart';
+import 'src/github_summary.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,53 +33,24 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GithubLoginWidget(
+      builder: (context, httpClient) {
+        WindowToFront.activate(); // and this.
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(title),
+          ),
+          body: GitHubSummary(
+            gitHub: _getGitHub(httpClient.credentials.accessToken),
+          ),
+        );
+      },
       githubClientId: githubClientId,
       githubClientSecret: githubClientSecret,
       githubScopes: githubScopes,
-      builder: (context, httpClient) {
-        WindowToFront.activate();
-        return FutureBuilder<List<PullRequest>>(
-            future: _getPullRequests(httpClient.credentials.accessToken),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('${snapshot.error}'));
-              }
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final pullRequests = snapshot.data!;
-              return Scaffold(
-                appBar: AppBar(
-                  title: Text(title),
-                ),
-                body: Center(
-                  child: ListView.builder(
-                      itemCount: pullRequests.length,
-                      itemBuilder: (context, index) {
-                        final pullRequest = pullRequests.elementAt(index);
-                        return ListTile(
-                          title: Text(pullRequest.title ?? ''),
-                        );
-                      }),
-                ),
-              );
-            });
-      },
-      /*githubClientId: githubClientId,
-      githubClientSecret: githubClientSecret,
-      githubScopes: githubScopes,*/
     );
   }
 }
 
-Future<CurrentUser> viewerDetail(accessToken) {
-  final gitHub = GitHub(auth: Authentication.withToken(accessToken));
-  return gitHub.users.getCurrentUser();
-}
-
-Future<List<PullRequest>> _getPullRequests(accessToken) {
-  final gitHub = GitHub(auth: Authentication.withToken(accessToken));
-  return gitHub.pullRequests
-      .list(RepositorySlug('flutter', 'flutter'))
-      .toList();
+GitHub _getGitHub(String accessToken) {
+  return GitHub(auth: Authentication.withToken(accessToken));
 }
