@@ -36,19 +36,29 @@ class MyHomePage extends StatelessWidget {
       githubScopes: githubScopes,
       builder: (context, httpClient) {
         WindowToFront.activate();
-        return FutureBuilder<CurrentUser>(
-            future: viewerDetail(httpClient.credentials.accessToken),
+        return FutureBuilder<List<PullRequest>>(
+            future: _getPullRequests(httpClient.credentials.accessToken),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('${snapshot.error}'));
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final pullRequests = snapshot.data!;
               return Scaffold(
                 appBar: AppBar(
                   title: Text(title),
                 ),
-                body:  Center(
-                  child: Text(
-                    snapshot.hasData ?
-                        'Hello, ${snapshot.data!.login}' :
-                        'Retrieving viewer login details ... '
-                  ),
+                body: Center(
+                  child: ListView.builder(
+                      itemCount: pullRequests.length,
+                      itemBuilder: (context, index) {
+                        final pullRequest = pullRequests.elementAt(index);
+                        return ListTile(
+                          title: Text(pullRequest.title ?? ''),
+                        );
+                      }),
                 ),
               );
             });
@@ -63,4 +73,11 @@ class MyHomePage extends StatelessWidget {
 Future<CurrentUser> viewerDetail(accessToken) {
   final gitHub = GitHub(auth: Authentication.withToken(accessToken));
   return gitHub.users.getCurrentUser();
+}
+
+Future<List<PullRequest>> _getPullRequests(accessToken) {
+  final gitHub = GitHub(auth: Authentication.withToken(accessToken));
+  return gitHub.pullRequests
+      .list(RepositorySlug('flutter', 'flutter'))
+      .toList();
 }
