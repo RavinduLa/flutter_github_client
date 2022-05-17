@@ -29,6 +29,9 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GithubLoginWidget(
+      githubClientId: githubClientId,
+      githubClientSecret: githubClientSecret,
+      githubScopes: githubScopes,
       builder: (context, httpClient) {
         return Scaffold(
           appBar: AppBar(
@@ -41,9 +44,9 @@ class MyHomePage extends StatelessWidget {
           ),
         );
       },
-      githubClientId: githubClientId,
+      /*githubClientId: githubClientId,
       githubClientSecret: githubClientSecret,
-      githubScopes: githubScopes,
+      githubScopes: githubScopes,*/
     );
   }
 }
